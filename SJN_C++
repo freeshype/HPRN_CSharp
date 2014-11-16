@@ -1,0 +1,144 @@
+// cslab3.cpp : Defines the entry point for the console application.
+//
+
+#include "stdafx.h"
+#include "iostream"
+#include "cmath"
+///define variables here
+struct PROCESS {
+	int service_time, arrival_time;
+	char diagram[30];
+
+};
+int number_of_processes = 0;
+ int smallest_job;
+int total_service_time=0;
+using namespace std;
+int diagram_index= 0;
+int Calculate_Smallest(PROCESS processes[]);
+int Recursive_Algorithm(PROCESS processes[], int smallest_job);
+
+int _tmain(int argc, _TCHAR* argv[])
+{
+	
+	
+	cout<<"Please type how many processes you want: "<<endl;
+	cin>> number_of_processes;
+
+	
+	PROCESS * processes = new PROCESS[number_of_processes];
+
+	for (int i = 0; i< number_of_processes; i++)
+	{
+		cout<<"Enter arrival time for process: "<<i<<": ";
+		cin>> processes[i].arrival_time;
+		
+		cout<<"Enter service time for process: "<<i<<": ";
+		cin>> processes[i].service_time;
+
+		
+		
+		for (int j=0; j<30; j++)
+		{
+			processes[i].diagram[j] = '-';///initialized array with all inactive (-)
+	    }
+
+	}
+
+	for (int i = 0; i< number_of_processes; i++)
+	{
+		total_service_time =total_service_time + processes[i].service_time;/////////////calculate total service time
+
+	}
+	////////created proccesses dynamically
+	 
+	//_____________________________________________________________________________________-
+	int smallest = processes[0].arrival_time;///Find smallest arrival time
+	for (int i= 0; i<number_of_processes; i++)
+	{
+		if ( processes[i].arrival_time < smallest)
+			 smallest = processes[i].arrival_time;
+	}
+	
+	for (int i= 0; i<number_of_processes; i++)/////allocate active to smallest arrival time
+	{
+		if ( processes[i].arrival_time ==smallest)
+		{
+			 processes[i].diagram[diagram_index] = 'A';
+			 diagram_index++;
+			 processes[i].service_time--;
+			 total_service_time--;
+			 
+		}
+	}
+	//_____________________________________________________________________________________-
+
+	///Start main algorithm and start allocating to processes who is active and have their turn
+    
+	Recursive_Algorithm(processes, smallest_job);////TO keep calling the function to process the algorithm
+
+	for (int i=0; i<number_of_processes; i++)///print out diagrams
+	{
+		cout<<"No. "<<i<<": ";
+		for (int j=0; j<30; j++)
+		{
+			cout<<processes[i].diagram[j]<<" ";
+		}
+		cout<<endl;
+	}
+	
+}
+int Calculate_Smallest(PROCESS processes[])
+{
+	 smallest_job = 1000;
+	for ( int i =0; i<number_of_processes; i++)////smallest is static because it is smallest
+	{
+	if (processes[i].arrival_time <= diagram_index && processes[i].service_time > 0)//who is in the system
+	{
+		 
+			if (processes[i].service_time < smallest_job)//find who has smallest job
+				smallest_job = processes[i].service_time;	
+	}
+	}
+	return smallest_job;
+	 
+}
+ int Recursive_Algorithm(PROCESS processes[], int smallest_job)
+ {
+      smallest_job = Calculate_Smallest(processes);
+	 
+	 for ( int i =0; i<number_of_processes; i++)
+	{
+		if (processes[i].service_time == smallest_job)
+		{
+				processes[i].diagram[diagram_index] = 'A';//give the process a tick
+				 
+				processes[i].service_time--; // reduce its service time
+				total_service_time--;
+				 
+				diagram_index++;//increase tick
+				smallest_job = Calculate_Smallest(processes);
+				/*for (int j=0; j<number_of_processes; j++)
+				{
+					if (processes[j].service_time !=smallest_job  && processes[j].arrival_time <=diagram_index  && processes[j].service_time > 0)
+						processes[j].diagram[diagram_index] = 'w';
+
+				}*/
+				 
+		}
+
+	 }
+		
+	 
+	 
+	 if ( total_service_time > 0  )
+	 {
+	return Recursive_Algorithm(processes, smallest_job);
+	 }
+
+	 else
+	  return 0;
+     
+	
+
+ }
