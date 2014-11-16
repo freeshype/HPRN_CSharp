@@ -16,6 +16,7 @@ namespace Lab3_Prog
        public static char[] process_name = "ABCDEFGHIJKLMNOPQRSTUVWXYZ".ToCharArray();
        public static double main_gs =0 ;
        public static int num_of_processes = 0;   
+       public static double highest_pen = 0;
        
        public struct PROCESS
         {
@@ -46,7 +47,7 @@ namespace Lab3_Prog
           
            
           int least_arr = processes[0].t_arr;
-          double highest_pen = 0;
+          //double highest_pen = 0;
 
           #region Hardcode Inits
           //Intitialize the of processes
@@ -294,20 +295,27 @@ namespace Lab3_Prog
                //}
 
                #endregion
-            highest_pen = calc_high_pen(processes, diag_index);
-            Assign_o(processes, diag_index, num_of_processes);
-            Assign_X(processes, highest_pen, num_of_processes,main_gs,diag_index);
-            show_diagram(num_of_processes, processes);
+          
+          for (int i = 0; i < num_of_processes; i++)
+          {
+            calc_high_pen(processes, diag_index);
+            for (int k = 0; k < main_gs; k++)
+            {
+                //Assign_o(processes, diag_index, num_of_processes);
+               Assign_X(processes, num_of_processes, main_gs, diag_index);
+            }
+               
+          }
+         //   show_diagram(num_of_processes, processes);
 
-
+                Console.WriteLine();
+                show_diagram(num_of_processes, processes);
             for (int i = 0; i < num_of_processes; i++)
             {
                 Console.WriteLine(String.Format("{0:0.00}", processes[i].penalty));
                 //Console.WriteLine();
                 //Console.WriteLine(processes[i].TST);
-                //Console.WriteLine(processes[i].penalty);
-
-
+                //Console.WriteLine(highest_pen);
             }
             //Console.WriteLine(main_gs);
             press_key();
@@ -356,21 +364,22 @@ namespace Lab3_Prog
           }
       }
 
-      public static int Assign_o (PROCESS[] processes, int diag_index, int num_of_processes)
+      public static void Assign_o (PROCESS[] processes, int diag_index, int num_of_processes)
       {
           for (int i = 0; i < num_of_processes; i++)
           {
               #region Assign_wait
               // Assign wait zeroes
-              if (processes[i].penalty < calc_high_pen(processes, diag_index))
+              double high_pen = calc_high_pen(processes, diag_index);
+              if (processes[i].penalty < high_pen)
               {
 
-                  for (int k = processes[i].t_arr; k < diag_index && processes[i].t_serv != 0; k++)
+                  for (int k = processes[i].t_arr; k < diag_index && (int) processes[i].t_serv != 0; k++)
                   {
 
                       processes[i].diagram[k] = 'o';
                       processes[i].TST++;
-                      processes[i].t_wait++;
+                    //  processes[i].t_wait++;
 
 
                   }
@@ -378,20 +387,23 @@ namespace Lab3_Prog
               }
               #endregion
           }
-          return Assign_o(processes, diag_index,num_of_processes);
+          //return Assign_o(processes, diag_index,num_of_processes);
       }
 
-      public static int Assign_X (PROCESS[] processes, double highest_pen, int num_of_processes, double main_gs, int diag_index)
+      public static int Assign_X (PROCESS[] processes, int num_of_processes, double main_gs, int diag_index)
       {
+         double high_pen = calc_high_pen(processes, diag_index);
+          #region Assign_X
           for (int i = 0; i < num_of_processes; i++)
-          {
-              if (processes[i].penalty == calc_high_pen(processes,diag_index))
+          { 
+              if (processes[i].penalty == high_pen)
               {
-                  for (int j = 0; j < processes[i].t_serv; j++)
+                  
+                  for (int j = 0; j < (int) processes[i].t_serv; j++)
                   {
 
                       processes[i].diagram[diag_index] = 'X';
-                      diag_index++;
+                     diag_index++;
                       processes[i].TST++;
                       main_gs--;
 
@@ -399,14 +411,16 @@ namespace Lab3_Prog
                   processes[i].t_serv = 0;
 
               }
+             // highest_pen = processes[0].penalty;
           }
+          #endregion
           //Console.WriteLine(main_gs);
           //Calls Highest Penalty Calculator
-          calc_high_pen(processes, diag_index); 
+         // calc_high_pen(processes, diag_index); 
 
-          if (main_gs != 0)
+          if (main_gs > 0)
           {
-              return Assign_X(processes, highest_pen, num_of_processes, main_gs, diag_index);
+              return Assign_X(processes, num_of_processes, main_gs, diag_index);
           }
             
           else return 0;
