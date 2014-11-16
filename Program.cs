@@ -1,4 +1,5 @@
 using System;
+using System.Globalization;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -11,25 +12,42 @@ namespace Lab3_Prog
     class Program
     { 
        public static int diag_index ;
+       public static int width_of_cmd = 126;
+       public static char[] process_name = "ABCDEFGHIJKLMNOPQRSTUVWXYZ".ToCharArray();
+       public static double main_gs =0 ;
+       public static int num_of_processes = 0;   
+       
        public struct PROCESS
         {
-            public int t_arr, t_serv, TST, MST, t_wait; public double Ratio_R, Ratio_P;
+            public int t_arr, TST, MST; public double Ratio_R, Ratio_P, penalty, t_wait, t_serv;
             public char[] diagram;
         }
        static PROCESS Create()
-       {   return new PROCESS()
+        {   
+           return new PROCESS()
             {
-                diagram = new char[128],
+                diagram = new char[width_of_cmd],
             };
-       }
+        }
       
       public static void Main()
         {
-            Console.WriteLine("Created by Adetunji Openiyi, Class of 2015");
-            int num_of_processes = 0;
-            PROCESS[] processes = new PROCESS[num_of_processes];
-            int least_arr = processes[0].t_arr;
+            Console.WriteLine("Created by Adetunji Openiyi, Class of 2015"); //Opening Credits
+          // Initialize variable for holding the number of processes dynamocally
+          //int num_of_processes = 0;    
+           
+          //Enable user input of number of prosecces                        
+           Console.Write("Please Enter Number of Processes: ");
+          num_of_processes = int.Parse(Console.ReadLine());
+
+          //Declare array of structures
+          PROCESS[] processes = new PROCESS[num_of_processes]; 
             
+          
+           
+          int least_arr = processes[0].t_arr;
+          double highest_pen = 0;
+         
        
             //Intitialize the of processes
             //PROCESS A, B, C, D, E;
@@ -51,13 +69,12 @@ namespace Lab3_Prog
             //B.TST = 0;
             //C.TST = 0;
             //D.TST = 0;
-            //E.TST = 0;
-            
-            Console.Write("Please Enter Number of Processes: ");
-            num_of_processes = int.Parse(Console.ReadLine());
+          //E.TST = 0;
 
 
-            
+
+            #region
+          // Initialization of all fields in the structure array
             for(int i =0; i<num_of_processes;)
             {
               //processes[i].t_arr = 0;
@@ -66,64 +83,180 @@ namespace Lab3_Prog
               processes[i].t_arr = int.Parse(Console.ReadLine());
 
               Console.Write("Please Enter Service Time for process {0}: ", i);
-              processes[i].t_serv = int.Parse(Console.ReadLine());
+              processes[i].t_serv = double.Parse(Console.ReadLine());
 
               processes[i].MST = 0;
               processes[i].TST = 0;
               processes[i].t_wait = 0;
               processes[i].Ratio_R = 0;
               processes[i].Ratio_P = 0;
-              processes[i].diagram = new char[128];
-                 for (int j = 0; j < 128;)
+              processes[i].penalty = 0;
+              processes[i].diagram = new char[width_of_cmd];
+                 for (int j = 0; j < width_of_cmd;)
                  {
                   
                      processes[i].diagram[j] = '=';
                      j++;
                  }
-                 i++; 
-              
+                 i++;
+
             }
+          #endregion
             //Console.WriteLine("Process 0 arrival time is {0}", processes[0].t_arr);
-
+            main_gs = global_serv(processes, num_of_processes);
             //Determine the smallest arrival time
-            
+            diag_index = least_arr;
 
-            for (int i = 0; i < num_of_processes; )
+
+            #region find_least
+            for (int i = 0; i < num_of_processes; i++)
             {
                 if (processes[i].t_arr < least_arr)
                     least_arr = processes[i].t_arr;
-                i++;
-                diag_index = least_arr;
 
+
+                // If a process has the smallest time give it X
+                #region first_process
                 if (processes[i].t_arr == least_arr)
                 {
                     for (int j = 0; j < processes[i].t_serv; j++)
                     {
                         processes[i].diagram[j] = 'X';
                         diag_index++;
+                        processes[i].TST++;
+                        
+                        
                     }
+                    processes[i].t_serv = 0;
+                    i++; 
+                    //Console.WriteLine("!!! "+processes[i].t_serv);
+                     //Because finished
                 }
-            }
+                #endregion
+                
+            } 
+            #endregion
+            //Console.WriteLine("!!! " + processes[2].t_serv);
 
+            #region Assign_first wait
+            // Add "o" if a process is waiting
             for (int i = 0; i < num_of_processes; i++)
             {
-                Console.Write(processes[i].diagram[i]);
+                if (processes[i].t_arr > least_arr)
+                {
+
+                    for (int k = processes[i].t_arr; k < diag_index; k++)
+                    {
+                        processes[i].diagram[k] = 'o';
+                        processes[i].TST++;
+                        processes[i].t_wait++;
+                    }
+
+                }
+
             }
+            #endregion
 
-           // Console.Write(least_arr);
-     
-         
-         //Console.Write("Please Enter Number of Processes: ");
-         //num_of_processes = int.Parse(Console.ReadLine());
 
-          //Initialize array to store the process arrival times
-          //Console.WriteLine("Please Enter process arrival times: ");
-          //int[] t_arr = new int[num_of_processes];
-          //for(int i =0; i<num_of_processes;)
-          //{
-          //    t_arr[i] = int.Parse(Console.ReadLine());
-          //    i++;
-          //}
+
+            //for (int i = 0; i < num_of_processes; i++)
+            //{
+            //    processes[i].penalty = (processes[i].t_wait + processes[i].t_serv) / processes[i].t_serv;
+
+            //    if (processes[i].TST == diag_index)
+            //    {
+            //        processes[i].penalty = 0;
+            //    }
+      
+            //}
+            //highest_pen = processes[0].penalty;
+            //Testing loop
+            #region test
+            for (int i = 0; i < num_of_processes; i++)
+            {
+                Console.WriteLine(String.Format("{0:0.00}", processes[i].penalty));
+                //Console.WriteLine();
+                //Console.WriteLine(processes[i].TST);
+                //Console.WriteLine(processes[i].penalty);
+               
+
+            }
+            #endregion
+            // Console.WriteLine(diag_index);
+            // Console.Write(least_arr);
+
+            #region code_for_highest pen
+            // Assign the highest penalty
+            //for (int i = 0; i < num_of_processes; i++)
+            //{
+            //    if (processes[i].penalty > highest_pen)
+            //        highest_pen = processes[i].penalty;
+            //}
+            #endregion
+
+
+            // Calculate highest penalty
+               for (int i = 0; i < num_of_processes; i++)
+                {
+                    #region Assign_wait
+                    // Assign wait zeroes
+                    if (processes[i].penalty < highest_pen)
+                    {
+
+                        for (int k = processes[i].t_arr; k < diag_index && processes[i].t_serv != 0; k++)
+                        {
+                            
+                            processes[i].diagram[k] = 'o';
+                            processes[i].TST++;
+                            processes[i].t_wait++;
+
+
+                        }
+
+                    }
+                    #endregion
+
+                    #region assign X
+                    ////Assign X
+                    //if (processes[i].penalty == highest_pen)
+                    //{
+                    //    for (int j = 0; j < processes[i].t_serv; j++)
+                    //    {
+
+                    //        processes[i].diagram[diag_index] = 'X';
+                    //        diag_index++;
+                    //        processes[i].TST++;
+                           
+
+                    //    }
+                    //    processes[i].t_serv = 0;
+
+                    //}
+                    #endregion
+
+
+                }
+
+               #region Other stuff
+               //for (int i = 0; i < num_of_processes; i++)
+            //{
+
+            //    if (processes[i].penalty < highest_pen)
+            //    {
+
+            //        for (int k = processes[i].t_arr; k < diag_index; k++)
+            //        {
+
+            //            processes[i].diagram[k] = 'o';
+            //            processes[i].TST++;
+            //            processes[i].t_wait++;
+
+                        
+            //        }
+
+            //    }
+                
+            //}
 
           //Initialize array to store difference between TST and t_serv time in system
           // Mean System time
@@ -156,21 +289,26 @@ namespace Lab3_Prog
           //    {
           //        Ratio_P[i] = TST[j]/t_serv[j];
           //    }
-          //}
-         
-          
+               //}
 
+               #endregion
+               highest_pen = calc_high_pen(processes, diag_index);
+            Assign_X(processes, highest_pen, num_of_processes,main_gs);
+            show_diagram(num_of_processes, processes);
+            //Console.WriteLine(main_gs);
+            press_key();
         }
 
-      public static double average_int(int[] i)
+      public static double global_serv(PROCESS[] processes, int num_of_processes)
       {
-          double avg = 0;
-          for (int j = 0; j < i.Length; ++j)
+          double gs = 0;
+          for (int j = 0; j < num_of_processes; ++j)
           {
-              avg += i[j];
-              avg = avg / i.Length;
+              gs += processes[j].t_serv;
+              //avg = avg / i.Length;
           }
-          return avg;
+          
+          return gs;
       }
 
       public static double average_double(double[] i)
@@ -183,5 +321,78 @@ namespace Lab3_Prog
           }
           return avg;
       }
+
+      public static void press_key ()
+      {
+          Console.WriteLine("Press any key to continue...");
+          Console.ReadKey();
+      }
+      public static void show_diagram (int num_of_processes, PROCESS[] processes)
+      {
+          //To display the diargram of process
+          for (int i = 0; i < num_of_processes; i++)
+          {
+              Console.WriteLine();
+              Console.Write(process_name[i]+" ");
+              for (int j = 0; j < width_of_cmd; ++j)
+              {
+                  
+                  Console.Write(processes[i].diagram[j]);
+              }
+          }
+      }
+
+      public static int Assign_X (PROCESS[] processes, double highest_pen, int num_of_processes, double main_gs)
+      {
+          for (int i = 0; i < num_of_processes; i++)
+          {
+              if (processes[i].penalty == highest_pen)
+              {
+                  for (int j = 0; j < processes[i].t_serv; j++)
+                  {
+
+                      processes[i].diagram[diag_index] = 'X';
+                      diag_index++;
+                      processes[i].TST++;
+                      main_gs--;
+
+                  }
+                  processes[i].t_serv = 0;
+
+              }
+          }
+          //Console.WriteLine(main_gs);
+          //Calls Highest Penalty Calculator
+          calc_high_pen(processes, diag_index); 
+
+          if (main_gs != 0)
+          {
+              return Assign_X(processes, highest_pen, num_of_processes, main_gs);
+          }
+            
+          else return 0;
+        
+      }
+
+      public static double calc_high_pen (PROCESS[] processes, int diag_index)
+      {
+          double highest_pen = 0;
+          for (int i = 0; i < num_of_processes; i++)
+          {
+              processes[i].penalty = (processes[i].t_wait + processes[i].t_serv) / processes[i].t_serv;
+
+              if (processes[i].TST == diag_index)
+              {
+                  processes[i].penalty = 0;
+              }
+
+              if (processes[i].penalty > highest_pen)
+                  highest_pen = processes[i].penalty;
+          }
+
+          return highest_pen;
+      }
+
+
     }
 }
