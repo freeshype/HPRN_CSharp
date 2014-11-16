@@ -5,12 +5,13 @@
 #include "iostream"
 #include "cmath"
 ///define variables here
+#define DIAGRAM_AMOUNT   30
 struct PROCESS {
 	double dArrival_time;
 	double dPenalty, dWait_time, dService_time;//for double operations
 	int iArrival_time, iPenalty, iWait_time, iService_time; //for integer operation
 	 
-	char diagram[50];
+	char diagram[DIAGRAM_AMOUNT];
 
 };
 int number_of_processes = 0;
@@ -42,7 +43,7 @@ int _tmain(int argc, _TCHAR* argv[])
 		processes[i].dService_time = (double)processes[i].iService_time;
 		
 		
-		for (int j=0; j<50; j++)
+		for (int j=0; j<DIAGRAM_AMOUNT; j++)
 		{
 			processes[i].diagram[j] = '-';///initialized array with all inactive (-)
 			 
@@ -124,39 +125,20 @@ int _tmain(int argc, _TCHAR* argv[])
 
 
 
-	for (int k =0; k<30; k++)///print out diagrams
+	for (int i=0; i<number_of_processes; i++)///print out diagrams
 	{
-    cout<<" "<<processes[0].diagram[k];
+		cout<<"PID "<<i<<": ";
+		for (int j=0; j<DIAGRAM_AMOUNT; j++)
+		{
+			cout<<processes[i].diagram[j]<<" ";
+		}
+		cout<<endl;
 	}
-	cout<<endl;
-	for (int k =0; k<30; k++)///print out diagrams
-	{
-    cout<<" "<<processes[1].diagram[k];
-	}
-	cout<<endl;
-
-	for (int k =0; k<30; k++)///print out diagrams
-	{
-    cout<<" "<<processes[2].diagram[k];
-	}
-	cout<<endl;
-
-	for (int k =0; k<30; k++)///print out diagrams
-	{
-    cout<<" "<<processes[3].diagram[k];
-	}
-	cout<<endl;
-
-	for (int k =0; k<30; k++)///print out diagrams
-	{
-    cout<<" "<<processes[4].diagram[k];
-	}
-	cout<<endl;
-
-
 	
-	
+
 }
+
+
 
  double Calculate_Penalty(PROCESS processes[], int no_processes)
 {
