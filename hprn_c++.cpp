@@ -202,7 +202,9 @@ int _tmain(int argc, _TCHAR* argv[])
 			}
 		     
 		}
-	
+	 }
+	 for ( int i =0; i<number_of_processes; i++)
+	{
 		if (processes[i].dPenalty !=highest_penalty && processes[i].iArrival_time <= diagram_index && processes[i].iService_time >0)//if not highest, is in the system and is not yet finished
 		{
 			 int temp_arrival_time = processes[i].iArrival_time;
