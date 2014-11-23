@@ -4,25 +4,41 @@
 #include "stdafx.h"
 #include "iostream"
 #include "cmath"
+#include <iomanip>
 ///define variables here
+#define array_size 35
+
 struct PROCESS {
 	int service_time, arrival_time;
-	char diagram[30];
-
+	double const_service_time;
+	char diagram[array_size];
+	bool assigned;
+	int idle_time;
+	double total_time, lost_time;
+	double reactivity_ratio, penalty_ratio;
 };
 int number_of_processes = 0;
- int smallest_job;
+ int smallest_job, highest_idle;
 int total_service_time=0;
+int smallest_job_amount;
 using namespace std;
 int diagram_index= 0;
 int Calculate_Smallest(PROCESS processes[]);
-int Recursive_Algorithm(PROCESS processes[], int smallest_job);
-
+int Recursive_Algorithm(PROCESS processes[], int smallest_job, int highest_idle);
+int Calculate_Idle(PROCESS processes[]);
+int Calculate_Smallest_Amount(PROCESS processes[]);
+int Calculate_Idle_Amount(PROCESS processes[]);
+int Calculate_Newest(PROCESS processes[]);
+void Lost_time(PROCESS processes[]);
+void Reactivity_Ratio(PROCESS processes[]);
+void Penalty_Ratio(PROCESS processes[]);
 int _tmain(int argc, _TCHAR* argv[])
 {
 	
-	
-	cout<<"Please type how many processes you want: "<<endl;
+	system("Color 5E");
+	cout<<"Program by Gesiye Bekeyei. All rights reserved"<<endl;
+	cout<<endl;
+	cout<<"How many processes do you want? ";
 	cin>> number_of_processes;
 
 	
@@ -30,15 +46,20 @@ int _tmain(int argc, _TCHAR* argv[])
 
 	for (int i = 0; i< number_of_processes; i++)
 	{
-		cout<<"Enter arrival time for process: "<<i<<": ";
+		cout<<"Enter arrival time for process: "<<i+1<<": ";
 		cin>> processes[i].arrival_time;
 		
-		cout<<"Enter service time for process: "<<i<<": ";
+		cout<<"Enter service time for process: "<<i+1<<": ";
 		cin>> processes[i].service_time;
-
+		processes[i].const_service_time = processes[i].service_time;///storing a constant service time for future calculations
+		
+		processes[i].total_time =0; processes[i].lost_time =0;processes[i].reactivity_ratio =0;processes[i].penalty_ratio =0;///For the table
 		
 		
-		for (int j=0; j<30; j++)
+		processes[i].assigned = 0;
+		processes[i].idle_time = 0;
+		
+		for (int j=0; j<array_size; j++)
 		{
 			processes[i].diagram[j] = '-';///initialized array with all inactive (-)
 	    }
@@ -52,12 +73,13 @@ int _tmain(int argc, _TCHAR* argv[])
 	}
 	////////created proccesses dynamically
 	 
-	//_____________________________________________________________________________________-
+	//_____________________________________________________________________________________
 	int smallest = processes[0].arrival_time;///Find smallest arrival time
 	for (int i= 0; i<number_of_processes; i++)
 	{
 		if ( processes[i].arrival_time < smallest)
 			 smallest = processes[i].arrival_time;
+		diagram_index = smallest;
 	}
 	
 	for (int i= 0; i<number_of_processes; i++)/////allocate active to smallest arrival time
@@ -68,6 +90,7 @@ int _tmain(int argc, _TCHAR* argv[])
 			 diagram_index++;
 			 processes[i].service_time--;
 			 total_service_time--;
+			 processes[i].total_time++;
 			 
 		}
 	}
@@ -75,22 +98,65 @@ int _tmain(int argc, _TCHAR* argv[])
 
 	///Start main algorithm and start allocating to processes who is active and have their turn
     
-	Recursive_Algorithm(processes, smallest_job);////TO keep calling the function to process the algorithm
+	Recursive_Algorithm(processes, Calculate_Smallest(processes), Calculate_Idle(processes));////TO keep calling the function to process the algorithm
 
+	cout<<endl<<endl;
 	for (int i=0; i<number_of_processes; i++)///print out diagrams
 	{
-		cout<<"No. "<<i<<": ";
-		for (int j=0; j<30; j++)
+		 
+		cout<<"PID_"<<i+1<<": ";
+		for (int j=0; j<array_size; j++)
 		{
+			
 			cout<<processes[i].diagram[j]<<" ";
 		}
 		cout<<endl;
 	}
 	
+	////For other calculations
+	Lost_time(processes);
+	Reactivity_Ratio(processes);
+	Penalty_Ratio(processes);
+	cout<<endl;
+     
+	cout<<"       T"<<"    "<<"M"<<"    "<<"R"<<"      "<<"P"<<endl;
+	
+	for (int i=0; i<number_of_processes; i++)///print out second diagram
+	{
+		 
+		    cout<<"PID_"<<i+1<<": ";
+		    
+			cout<<setw(5)<<left<<processes[i].total_time;
+		    cout<<setw(5)<<left<<processes[i].lost_time;
+			cout<<setw(7)<<left<<setprecision(2)<<processes[i].reactivity_ratio;
+			cout<<setw(7)<<left<<setprecision(2)<<processes[i].penalty_ratio;
+	     	cout<<endl;
+	}
+
+	///calculate averages
+	 double T_average=0, M_average=0, R_average=0, P_average=0;
+	for (int i=0; i<number_of_processes; i++)///print out second diagram
+	{
+		 T_average= T_average+processes[i].total_time;
+		 M_average= M_average+processes[i].lost_time;
+		 R_average = R_average + processes[i].reactivity_ratio;
+		 P_average = P_average + processes[i].penalty_ratio;  	 
+	}
+		T_average= T_average/number_of_processes;
+		 M_average= M_average/number_of_processes;
+		 R_average = R_average/number_of_processes;
+		 P_average = P_average/number_of_processes;
+	     cout<<"AV:    ";
+		 cout<<setw(5)<<left<<T_average;
+		 cout<<setw(5)<<left<<M_average;
+		 cout<<setw(7)<<left<<setprecision(2)<< R_average;
+		 cout<<setw(7)<<left<<setprecision(2)<< P_average<<endl<<endl;
+		 
 }
 int Calculate_Smallest(PROCESS processes[])
 {
-	 smallest_job = 1000;
+	smallest_job = 1000;///make this number better later
+	
 	for ( int i =0; i<number_of_processes; i++)////smallest is static because it is smallest
 	{
 	if (processes[i].arrival_time <= diagram_index && processes[i].service_time > 0)//who is in the system
@@ -103,42 +169,199 @@ int Calculate_Smallest(PROCESS processes[])
 	return smallest_job;
 	 
 }
- int Recursive_Algorithm(PROCESS processes[], int smallest_job)
- {
-      smallest_job = Calculate_Smallest(processes);
-	 
-	 for ( int i =0; i<number_of_processes; i++)
+
+int Calculate_Smallest_Amount(PROCESS processes[])///calculate if 2 or more processes share the same service_time which are both smallest job
+{
+	smallest_job_amount = 0;
+	for (int i = 0;  i<number_of_processes; i++)
 	{
 		if (processes[i].service_time == smallest_job)
+			smallest_job_amount++;
+	}
+	return smallest_job_amount;
+}
+
+int Calculate_Idle(PROCESS processes[])////should be used only when two processes have equal smallest job
+{
+	highest_idle = 0;
+
+	for ( int i =0; i<number_of_processes; i++)////smallest is static because it is smallest
+	{
+		if (processes[i].arrival_time <= diagram_index && processes[i].service_time > 0 && processes[i].service_time ==smallest_job)//who is in the system
+	{
+		 
+			if (processes[i].idle_time > highest_idle)//find who has smallest job
+				highest_idle = processes[i].idle_time;	
+	}
+	}
+
+	
+	return highest_idle;
+}
+
+int Calculate_Idle_Amount(PROCESS processes[])///calculate if 2 or more processes share the same idle_time which are both smallest job and returns the amount
+{
+	int idle_time_amount = 0;
+	for (int i = 0;  i<number_of_processes; i++)
+	{
+		if (processes[i].arrival_time <= diagram_index && processes[i].service_time > 0 && processes[i].service_time ==smallest_job)
 		{
-				processes[i].diagram[diagram_index] = 'A';//give the process a tick
-				 
-				processes[i].service_time--; // reduce its service time
-				total_service_time--;
-				 
-				diagram_index++;//increase tick
-				smallest_job = Calculate_Smallest(processes);
-				/*for (int j=0; j<number_of_processes; j++)
-				{
-					if (processes[j].service_time !=smallest_job  && processes[j].arrival_time <=diagram_index  && processes[j].service_time > 0)
-						processes[j].diagram[diagram_index] = 'w';
-
-				}*/
-				 
+			if (processes[i].idle_time == highest_idle)
+			idle_time_amount++;
+	}
+	}
+	return idle_time_amount;
+}
+ 
+int Calculate_Newest(PROCESS processes[])///calculate newest amongst two/more processes with same job and idle times
+{
+	int newest = 1000;///find a better thing for this number
+	for (int i= 0; i<number_of_processes; i++)
+	{
+		if (processes[i].service_time ==smallest_job && processes[i].idle_time ==highest_idle)//either have equal highest idle or both are 0
+		{
+		if ( processes[i].arrival_time < newest)
+			 newest = processes[i].arrival_time;
 		}
+	}
+	return newest;
+}
+ int Recursive_Algorithm(PROCESS processes[], int smallest_job, int highest_idle)
+ {
+    
+	smallest_job_amount= Calculate_Smallest_Amount(processes);
+	highest_idle = Calculate_Idle(processes);
+	int idle_amount = Calculate_Idle_Amount(processes);
+	int newest = Calculate_Newest(processes);
+	   for ( int i =0; i<number_of_processes; i++)
+	{
+		 
+				   if (smallest_job_amount >1 &&idle_amount <=1)///////////****ONE MORE CONDITION NEEDED IF BOTH PROCESSES IDLE_TIME IS THE SAME OR ELSE ERROR
+					{
+					    if (processes[i].service_time ==smallest_job && processes[i].idle_time ==highest_idle && processes[i].arrival_time <=diagram_index )
+						{
+						processes[i].diagram[diagram_index] = 'A';
+						processes[i].service_time--;
+						total_service_time--;
+						processes[i].assigned= 1;
+						processes[i].idle_time = 0;
+						processes[i].total_time++;
+						}
+				     }	 
 
-	 }
-		
-	 
+				   else if (smallest_job_amount >1 && idle_amount >1)////if two have the same smallest time and same idle_time
+					   
+					{
+					    if (processes[i].service_time ==smallest_job && processes[i].arrival_time == newest && processes[i].arrival_time <=diagram_index )
+						{
+						processes[i].diagram[diagram_index] = 'A';
+						processes[i].service_time--;
+						total_service_time--;
+						processes[i].assigned= 1;
+						processes[i].idle_time = 0;
+						processes[i].total_time++;
+						}
+				     }
+
+
+				   else if (smallest_job_amount <=1)
+				   {
+						if (processes[i].service_time ==smallest_job && processes[i].arrival_time <=diagram_index )
+						{
+						processes[i].diagram[diagram_index] = 'A';
+						processes[i].service_time--; 
+						total_service_time--;
+						processes[i].assigned= 1;
+						processes[i].idle_time = 0;
+						processes[i].total_time++;
+						}
+
+				   }
+
+	   }	 
+			    for ( int i =0; i<number_of_processes; i++)////////////////ASSIGNING OF INACTIVE
+	{
+					
+					if (smallest_job_amount >1) 
+					{
+					    if (processes[i].service_time ==smallest_job && processes[i].idle_time !=highest_idle && processes[i].arrival_time <=diagram_index)///IF its is smallest job but another process has higher idle time
+						{
+						processes[i].diagram[diagram_index] = 'w';
+						processes[i].idle_time++;
+						processes[i].total_time++;
+						}
+						else if (processes[i].service_time ==smallest_job && processes[i].idle_time ==highest_idle && processes[i].arrival_time !=newest && processes[i].arrival_time <=diagram_index )///IF it has both smallest job and highest idle with another process, but is not newest
+						{
+						processes[i].diagram[diagram_index] = 'w';
+						processes[i].idle_time++;
+						processes[i].total_time++;
+						}
+						else if (processes[i].service_time >0 && processes[i].arrival_time <=diagram_index && processes[i].service_time != smallest_job && processes[i].assigned ==0)///normal inactive process
+						{
+						processes[i].diagram[diagram_index] = 'w';
+						processes[i].idle_time++;
+						processes[i].total_time++;
+						}
+				     }	 
+				   else if (smallest_job_amount <=1)
+				   {
+						if (processes[i].service_time >0 && processes[i].arrival_time <=diagram_index && processes[i].service_time != smallest_job && processes[i].assigned ==0)
+						{
+						processes[i].diagram[diagram_index] = 'w'; 
+						processes[i].idle_time++;
+						processes[i].total_time++;
+						}
+					
+				     }
+ 
+	   }
+	
+	 diagram_index++;
+	 for ( int i =0; i<number_of_processes; i++)
+					{
+						processes[i].assigned = 0;////resigning all booleans to false to recurse;
+				   }
 	 
 	 if ( total_service_time > 0  )
 	 {
-	return Recursive_Algorithm(processes, smallest_job);
+		
+	return Recursive_Algorithm(processes, Calculate_Smallest(processes), Calculate_Idle(processes));
+	
 	 }
 
 	 else
 	  return 0;
      
 	
+
+ }
+
+ void Lost_time(PROCESS processes[])
+ {
+	 for (int i=0; i<number_of_processes; i++)
+	 {
+		 processes[i].lost_time = processes[i].total_time - processes[i].const_service_time;
+		 
+	 }
+	 
+ }
+
+ void Reactivity_Ratio(PROCESS processes[])
+ {
+	 for (int i=0; i<number_of_processes;i++)
+	 {
+		  processes[i].reactivity_ratio = processes[i].const_service_time/processes[i].total_time;
+		  
+	 }
+
+ }
+
+  void Penalty_Ratio(PROCESS processes[])
+ {
+	 for (int i=0; i<number_of_processes;i++)
+	 {
+		  processes[i].penalty_ratio =  processes[i].total_time/processes[i].const_service_time;
+		  
+	 }
 
  }
