@@ -5,6 +5,7 @@
 #include "iostream"
 #include "cmath"
 #include <iomanip>
+#include <stdlib.h>
 ///define variables here
 #define array_size 35
 
@@ -32,9 +33,13 @@ int Calculate_Newest(PROCESS processes[]);
 void Lost_time(PROCESS processes[]);
 void Reactivity_Ratio(PROCESS processes[]);
 void Penalty_Ratio(PROCESS processes[]);
+char rerun = 'n';
 int _tmain(int argc, _TCHAR* argv[])
 {
 	
+	do 
+	{
+
 	system("Color 5E");
 	cout<<"Program by Gesiye Bekeyei. All rights reserved"<<endl;
 	cout<<endl;
@@ -151,8 +156,18 @@ int _tmain(int argc, _TCHAR* argv[])
 		 cout<<setw(5)<<left<<M_average;
 		 cout<<setw(7)<<left<<setprecision(2)<< R_average;
 		 cout<<setw(7)<<left<<setprecision(2)<< P_average<<endl<<endl;
-		 
+
+		 rerun = 'n';
+		 cout<<"Would you like to rerun program y/n?"<<endl;
+		 cin>>rerun;
+		 //system("CLS");
 }
+while (rerun !='n');
+ 
+}
+
+
+ 
 int Calculate_Smallest(PROCESS processes[])
 {
 	smallest_job = 1000;///make this number better later
