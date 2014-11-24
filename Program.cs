@@ -300,7 +300,13 @@ namespace Lab3_Prog
                       
 
                   }
-                 // processes[i].t_serv = 0;
+                  // processes[i].t_serv = 0;for (int i = 0; i < num_of_processes; i++)
+                  
+                      if (processes[i].t_serv == 0)
+                      {
+                          processes[i].penalty = 0;
+                      }
+                  
 
               }
               // highest_pen = processes[0].penalty;
@@ -352,12 +358,17 @@ namespace Lab3_Prog
               if (processes[i].t_serv > 0)
               processes[i].penalty = (processes[i].t_wait + processes[i].t_serv) / processes[i].t_serv;
 
+              
           }
+
+          
 
           for (int i = 0; i < num_of_processes; i++)
           {
               if (processes[i].penalty > highest_pen)
                   highest_pen = processes[i].penalty;
+
+             
           }
 
 
