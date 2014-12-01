@@ -22,17 +22,19 @@ struct PROCESS {
 	int queue, queue_time;
 };
 int number_of_processes = 0;
- int smallest_job, highest_idle, smallest_queue;
+ int highest_idle, smallest_queue,queue_amount, diag_increment;
 int total_service_time=0;
-int smallest_job_amount;
+ 
 using namespace std;
 int diagram_index= 0;
 int Q=0, N=0;
 int Calculate_Smallest(PROCESS processes[]);
 int Calculate_Smallest_Queue(PROCESS processes[]);
-int Recursive_Algorithm(PROCESS processes[], int smallest_job, int highest_idle);
+int Recursive_Algorithm(PROCESS processes[]);
 int Calculate_Idle(PROCESS processes[]);
 int Calculate_Smallest_Amount(PROCESS processes[]);
+int Calculate_Queue_Amount(PROCESS processes[]);
+int Calculate_Smallest_Queue(PROCESS processes[]);
 int Calculate_Idle_Amount(PROCESS processes[]);
 int Calculate_Newest(PROCESS processes[]);
 void Lost_time(PROCESS processes[]);
@@ -109,19 +111,21 @@ int _tmain(int argc, _TCHAR* argv[])
 			 processes[i].service_time--;
 			 total_service_time--;
 			 processes[i].total_time++;
-			 queue_time++;
-
+			 processes[i].queue_time++;
+			 
 			}
+			 processes[i].queue = ((processes[i].queue_time +(Q*N))/(Q*N))-1;
+			 cout<<processes[i].queue;
 		}
 	}
      temp_diag_index = diagram_index;
 	for (int i= 0; i<number_of_processes; i++)/////allocate inactive to first zeroes
 	{
-		if ( processes[i].arrival_time !=smallest && processes[i].service_time <=diagram_index)
+		if ( processes[i].arrival_time !=smallest && processes[i].arrival_time <=diagram_index)
 		{
-			for (int j = processes[i].arrival_time; j< processes[i].arrival_time+temp_diag_index; j++)
+			for (int j = processes[i].arrival_time; j< temp_diag_index; j++)
 			{
-			 processes[i].diagram[j] = 'o';
+			 processes[i].diagram[j] = 'w';
 			 processes[i].total_time++;
 			 processes[i].idle_time++;
 			  
@@ -131,8 +135,8 @@ int _tmain(int argc, _TCHAR* argv[])
 	//_____________________________________________________________________________________-
 
 	///Start main algorithm and start allocating to processes who is active and have their turn
-    
-	Recursive_Algorithm(processes, Calculate_Smallest(processes), Calculate_Idle(processes));////TO keep calling the function to process the algorithm
+    diag_increment =0;
+	Recursive_Algorithm(processes);////TO keep calling the function to process the algorithm
 
 	cout<<endl<<endl;
 	for (int i=0; i<number_of_processes; i++)///print out diagrams
@@ -214,33 +218,15 @@ int Calculate_Smallest_Queue(PROCESS processes[])///calculate smallest job
 	 
 }
 
-
-int Calculate_Smallest(PROCESS processes[])///calculate smallest job
+int Calculate_Queue_Amount(PROCESS processes[])///calculate if 2 or more processes share the same service_time which are both smallest queue
 {
-	smallest_job = 1000;///make this number better later
-	
-	for ( int i =0; i<number_of_processes; i++)////smallest is static because it is smallest
-	{
-	if (processes[i].arrival_time <= diagram_index && processes[i].service_time > 0)//who is in the system
-	{
-		 
-			if (processes[i].service_time < smallest_job)//find who has smallest job
-				smallest_job = processes[i].service_time;	
-	}
-	}
-	return smallest_job;
-	 
-}
-
-int Calculate_Smallest_Amount(PROCESS processes[])///calculate if 2 or more processes share the same service_time which are both smallest job
-{
-	smallest_job_amount = 0;
+	queue_amount = 0;
 	for (int i = 0;  i<number_of_processes; i++)
 	{
-		if (processes[i].service_time == smallest_job)
-			smallest_job_amount++;
+		if (processes[i].queue == smallest_queue)
+			queue_amount++;
 	}
-	return smallest_job_amount;
+	return queue_amount;
 }
 
 int Calculate_Idle(PROCESS processes[])////should be used only when two processes have equal smallest job
@@ -249,7 +235,7 @@ int Calculate_Idle(PROCESS processes[])////should be used only when two processe
 
 	for ( int i =0; i<number_of_processes; i++)////smallest is static because it is smallest
 	{
-		if (processes[i].arrival_time <= diagram_index && processes[i].service_time > 0 && processes[i].service_time ==smallest_job)//who is in the system
+		if (processes[i].arrival_time <= diagram_index && processes[i].service_time > 0 && processes[i].queue ==smallest_queue)//who is in the system
 	{
 		 
 			if (processes[i].idle_time > highest_idle)//find who has smallest job
@@ -261,12 +247,12 @@ int Calculate_Idle(PROCESS processes[])////should be used only when two processe
 	return highest_idle;
 }
 
-int Calculate_Idle_Amount(PROCESS processes[])///calculate if 2 or more processes share the same idle_time which are both smallest job and returns the amount
+int Calculate_Idle_Amount(PROCESS processes[])///calculate if 2 or more processes share the same idle_time which are both in same queue 
 {
 	int idle_time_amount = 0;
 	for (int i = 0;  i<number_of_processes; i++)
 	{
-		if (processes[i].arrival_time <= diagram_index && processes[i].service_time > 0 && processes[i].service_time ==smallest_job)
+		if (processes[i].arrival_time <= diagram_index && processes[i].service_time > 0 && processes[i].queue == smallest_queue)
 		{
 			if (processes[i].idle_time == highest_idle)
 			idle_time_amount++;
@@ -280,7 +266,7 @@ int Calculate_Newest(PROCESS processes[])///calculate newest amongst two/more pr
 	int newest = 1000;///find a better thing for this number
 	for (int i= 0; i<number_of_processes; i++)
 	{
-		if (processes[i].service_time ==smallest_job && processes[i].idle_time ==highest_idle)//either have equal highest idle or both are 0
+		if (processes[i].queue ==smallest_queue && processes[i].idle_time ==highest_idle)//either have equal highest idle or both are 0
 		{
 		if ( processes[i].arrival_time < newest)
 			 newest = processes[i].arrival_time;
@@ -288,99 +274,155 @@ int Calculate_Newest(PROCESS processes[])///calculate newest amongst two/more pr
 	}
 	return newest;
 }
- int Recursive_Algorithm(PROCESS processes[], int smallest_job, int highest_idle)
+ int Recursive_Algorithm(PROCESS processes[])
  {
     smallest_queue = Calculate_Smallest_Queue(processes);
-	smallest_job_amount= Calculate_Smallest_Amount(processes);
+	queue_amount= Calculate_Queue_Amount(processes);
 	highest_idle = Calculate_Idle(processes);
 	int idle_amount = Calculate_Idle_Amount(processes);
 	int newest = Calculate_Newest(processes);
+	int temp_diag_index = diagram_index;
+	diag_increment = 1;
+	  
 	   for ( int i =0; i<number_of_processes; i++)
 	{
-		 
-				 //  if (smallest_job_amount >1 &&idle_amount <=1)///////////****ONE MORE CONDITION NEEDED IF BOTH PROCESSES IDLE_TIME IS THE SAME OR ELSE ERROR
-					//{
-					//    if (processes[i].service_time ==smallest_job && processes[i].idle_time ==highest_idle && processes[i].arrival_time <=diagram_index )
-					//	{
-					//	processes[i].diagram[diagram_index] = 'A';
-					//	processes[i].service_time--;
-					//	total_service_time--;
-					//	processes[i].assigned= 1;
-					//	processes[i].idle_time = 0;
-					//	processes[i].total_time++;
-					//	}
-				 //    }	 
+		
+				   
+		if (queue_amount >1 &&idle_amount <=1)///////////if there are multiple smallest queues but they dont share the same idle time
+					{
+					    if (processes[i].queue ==smallest_queue && processes[i].idle_time ==highest_idle && processes[i].arrival_time <=diagram_index && processes[i].service_time >0)//what if it finishes?
+						{
+						 diag_increment = 0;
+						for (int j = diagram_index; j<diagram_index + Q; j++)
+						{
+						if (processes[i].service_time > 0)
+						{
+						processes[i].diagram[j] = 'A';
+						processes[i].service_time--;
+						total_service_time--;
+						processes[i].assigned= 1;
+						processes[i].idle_time = 0;
+						processes[i].total_time++;
+						diag_increment++;
+						processes[i].queue_time++;
+						 
+						}
+						 
+						}
+						processes[i].queue = ((processes[i].queue_time +(Q*N))/(Q*N))-1;	 
+						}
+				     }	 
 
-				 //  else if (smallest_job_amount >1 && idle_amount >1)////if two have the same smallest time and same idle_time
-					//   
-					//{
-					//    if (processes[i].service_time ==smallest_job && processes[i].arrival_time == newest && processes[i].arrival_time <=diagram_index )
-					//	{
-					//	processes[i].diagram[diagram_index] = 'A';
-					//	processes[i].service_time--;
-					//	total_service_time--;
-					//	processes[i].assigned= 1;
-					//	processes[i].idle_time = 0;
-					//	processes[i].total_time++;
-					//	}
-				 //    }
+				   else if (queue_amount >1 && idle_amount >1)////if two have the same smallest time and same idle_time
+					   
+					{
+					    if (processes[i].queue ==smallest_queue && processes[i].arrival_time == newest && processes[i].arrival_time <=diagram_index && processes[i].service_time >0 )
+						{
+							 diag_increment = 0;
+						for (int j = diagram_index; j<diagram_index + Q; j++)
+						{
+						if (processes[i].service_time > 0)
+						{
+						processes[i].diagram[j] = 'A';
+						processes[i].service_time--;
+						total_service_time--;
+						processes[i].assigned= 1;
+						processes[i].idle_time = 0;
+						processes[i].total_time++;
+						diag_increment++;
+						processes[i].queue_time++;
+						 
+						}
+						 
+						}
+						processes[i].queue = ((processes[i].queue_time +(Q*N))/(Q*N))-1;
+						 
+						}
+				     }
 
 
-				 //  else if (smallest_job_amount <=1)
-				 //  {
-					//	if (processes[i].service_time ==smallest_job && processes[i].arrival_time <=diagram_index )
-					//	{
-					//	processes[i].diagram[diagram_index] = 'A';
-					//	processes[i].service_time--; 
-					//	total_service_time--;
-					//	processes[i].assigned= 1;
-					//	processes[i].idle_time = 0;
-					//	processes[i].total_time++;
-					//	}
+				   else if (queue_amount  <=1)
+				   {
+						if (processes[i].queue == smallest_queue && processes[i].arrival_time <=diagram_index && processes[i].service_time >0 )
+						{
+							 diag_increment = 0;
+						for (int j = diagram_index; j<diagram_index + Q; j++)
+						{
+						if (processes[i].service_time > 0)
+						{
+						processes[i].diagram[j] = 'A';
+						processes[i].service_time--;
+						total_service_time--;
+						processes[i].assigned= 1;
+						processes[i].idle_time = 0;
+						processes[i].total_time++;
+						diag_increment++;
+						processes[i].queue_time++;
+						 
+						}
+						 
+						}
+						processes[i].queue = ((processes[i].queue_time +(Q*N))/(Q*N))-1;
+						 
+						}
 
-				 //  }
+				   }
 
-			   if (processes[i].queue ==smallest_queue && processes[i].arrival_time <= diagram_index )
-
-	   }	 
+		
+	   }
+	   	 
 			    for ( int i =0; i<number_of_processes; i++)////////////////ASSIGNING OF INACTIVE
 	{
 					
-					if (smallest_job_amount >1) 
+					if (queue_amount >1) //if there're many of the same queues
 					{
-					    if (processes[i].service_time ==smallest_job && processes[i].idle_time !=highest_idle && processes[i].arrival_time <=diagram_index)///IF its is smallest job but another process has higher idle time
+					    if (processes[i].queue==smallest_queue && processes[i].idle_time !=highest_idle && processes[i].arrival_time <=diagram_index && processes[i].service_time >0)///IF its is smallest job but another process has higher idle time
 						{
-						processes[i].diagram[diagram_index] = 'w';
+							for (int j = temp_diag_index; j< diagram_index +diag_increment; j++)
+						{
+						processes[i].diagram[j] = 'w';
 						processes[i].idle_time++;
 						processes[i].total_time++;
 						}
-						else if (processes[i].service_time ==smallest_job && processes[i].idle_time ==highest_idle && processes[i].arrival_time !=newest && processes[i].arrival_time <=diagram_index )///IF it has both smallest job and highest idle with another process, but is not newest
+						}
+
+						else if (processes[i].queue==smallest_queue && processes[i].idle_time ==highest_idle && processes[i].arrival_time !=newest && processes[i].arrival_time <=diagram_index && processes[i].service_time >0)///IF it has both smallest job and highest idle with another process, but is not newest
 						{
-						processes[i].diagram[diagram_index] = 'w';
+						for (int j = temp_diag_index; j< diagram_index +diag_increment; j++)
+						{
+						processes[i].diagram[j] = 'w';
 						processes[i].idle_time++;
 						processes[i].total_time++;
 						}
-						else if (processes[i].service_time >0 && processes[i].arrival_time <=diagram_index && processes[i].service_time != smallest_job && processes[i].assigned ==0)///normal inactive process
+						}
+
+						else if (processes[i].service_time >0 && processes[i].arrival_time <=diagram_index && processes[i].queue != smallest_queue && processes[i].assigned ==0  )///normal inactive process
 						{
-						processes[i].diagram[diagram_index] = 'w';
+						for (int j = temp_diag_index; j< diagram_index +diag_increment; j++)
+						{
+						processes[i].diagram[j] = 'w';
 						processes[i].idle_time++;
 						processes[i].total_time++;
+						}
 						}
 				     }	 
-				   else if (smallest_job_amount <=1)
+				   else if (queue_amount <=1)
 				   {
-						if (processes[i].service_time >0 && processes[i].arrival_time <=diagram_index && processes[i].service_time != smallest_job && processes[i].assigned ==0)
+						if (processes[i].service_time >0 && processes[i].arrival_time <=diagram_index && processes[i].queue != smallest_queue && processes[i].assigned ==0)
 						{
-						processes[i].diagram[diagram_index] = 'w'; 
+						for (int j = temp_diag_index; j< diagram_index +diag_increment; j++)
+						{
+						processes[i].diagram[j] = 'w';
 						processes[i].idle_time++;
 						processes[i].total_time++;
+						}
 						}
 					
 				     }
  
 	   }
 	
-	 diagram_index++;
+	  diagram_index = diagram_index+diag_increment;
 	 for ( int i =0; i<number_of_processes; i++)
 					{
 						processes[i].assigned = 0;////resigning all booleans to false to recurse;
@@ -389,7 +431,7 @@ int Calculate_Newest(PROCESS processes[])///calculate newest amongst two/more pr
 	 if ( total_service_time > 0  )
 	 {
 		
-	return Recursive_Algorithm(processes, Calculate_Smallest(processes), Calculate_Idle(processes));
+	return Recursive_Algorithm(processes);
 	
 	 }
 
